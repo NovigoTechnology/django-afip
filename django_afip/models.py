@@ -799,6 +799,9 @@ class ReceiptQuerySet(models.QuerySet):
             return []
         qs.order_by("issued_date", "id")._assign_numbers()
 
+        if self.filter(is_draft=False).exists():
+            raise ValueError("Cannot validate a draft receipt.")
+
         return qs._validate(ticket)
 
     def _validate(self, ticket=None):
@@ -1038,6 +1041,11 @@ class Receipt(models.Model):
         "Receipt",
         verbose_name=_("related receipts"),
         blank=True,
+    )
+    is_draft = models.BooleanField(
+        _("is draft"),
+        default=True,
+        help_text=_("Indicates that this receipt is not ready for validation."),
     )
 
     objects = ReceiptManager()
