@@ -12,6 +12,7 @@ from django_afip.factories import ReceiptFactory
 from django_afip.factories import ReceiptValidationFactory
 from django_afip.factories import ReceiptWithApprovedValidation
 from django_afip.factories import ReceiptWithInconsistentVatAndTaxFactory
+from django_afip.factories import ReceiptWithOldDateFactory
 from django_afip.factories import ReceiptWithVatAndTaxFactory
 
 
@@ -109,6 +110,19 @@ def test_failed_validation(populated_db):
     # FIXME: We're not creating rejection entries
     # assert receipt.validation.result == models.ReceiptValidation.RESULT_REJECTED
     assert models.ReceiptValidation.objects.count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.live
+def test_failed_validation_rollback(populated_db):
+    """Test validating valid receipts."""
+    receipt = ReceiptWithOldDateFactory()
+
+    errs = receipt.validate()
+
+    assert len(errs) == 1
+    assert models.ReceiptValidation.objects.count() == 0
+    assert receipt.receipt_number is None
 
 
 @pytest.mark.django_db
